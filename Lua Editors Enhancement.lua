@@ -6,23 +6,25 @@
 
 	Lua Editors Enhancement:
 
-	- Add Lua Engine Button to CE Main Form with shortcut CTRL+L
-	- Add CheckBox to lua engine, to clear output befor execute.(on top of Execute Button)
-	- Add clear popup item to lua engine, to clear output befor execute.
-	- inside "Lua Engine" and "Lua Editor" and "AutoAssemble Editor"
-		Ctrl + Mouse Wheel : Zoom Font Size and save it to restore later.
-		Auto close brackets with selected code "" '' () [] {}. see "AutoClose.List"
-		Ctrl+Q to comment (selected) code in lua (block) --[=[Code]=].
-		Ctrl+Shift+Q to uncomment (selected) code in lua (block).
-		Make indents use TABs only. (Space at the start of the line)
-		Keep spaces at end of the lines.
-		Backup script On Open or Close or Execute, or on Timer
-		Selection mode: (some of them works without this Extension)
-			* Hold ALT and Select : Select text in column mode.
-			* Hold CTRL + SHIFT + Click : type in multiple places.
-			* CTRL + SHIFT + N : toggle normal selection mode.
-			* CTRL + SHIFT + C : toggle column selection mode.
-			* CTRL + SHIFT + L : toggle line selection mode.
+	- Add Lua Engine Button To Ce Main Form With Shortcut Ctrl+L
+	- Add Checkbox To Lua Engine, To Clear Output Befor Execute.(On Top Of Execute Button)
+	- Add Clear Popup Item To Lua Engine, To Clear Output Befor Execute.
+	- Inside "Lua Engine" And "Lua Editor" And "Autoassemble Editor"
+		Ctrl + Mouse Wheel : Zoom Font Size And Save It To Restore Later.
+		Auto Close Brackets With Selected Code "" '' () [] {}. See "Autoclose.List"
+		Ctrl+Q To Comment (Selected) Code In Lua (Block) --[=[Code]=].
+		Ctrl+Shift+Q To Uncomment (Selected) Code In Lua (Block).
+		Make Indents Use Tabs Only. (Space At The Start Of The Line)
+		Keep Spaces At End Of The Lines.
+		Backup Script On Open Or Close Or Execute, Or On Timer
+		Add Menu "Browse This Memory Region" To Lua Editor Popup
+		Add Menu "Disassemble This Memory Region" To Lua Editor Popup
+		Selection Mode: (Some Of Them Works Without This Extension)
+			* Hold Alt And Select : Select Text In Column Mode.
+			* Hold Ctrl + Shift + Click : Type In Multiple Places.
+			* Ctrl + Shift + N : Toggle Normal Selection Mode.
+			* Ctrl + Shift + C : Toggle Column Selection Mode.
+			* Ctrl + Shift + L : Toggle Line Selection Mode.
 
 
 	MIT License
@@ -48,9 +50,7 @@
 	SOFTWARE.
 ]====] --
 -- TODO List
--- add auto backup
--- add popup menu to go to memory address
--- add clear befor execute in lua engine;
+-- ;
 local Disable_Extension = false
 if Disable_Extension then
 	return
@@ -828,6 +828,56 @@ this.findForm = function( FormName )
 	return Form
 end
 
+-- ! ########################
+-- ? CREATE MEMORY POPUP MENU
+-- ! ########################
+this.MemoryPopup = function( LuaEditor )
+	-- ? GET LUA EDITOR POPUP MENU
+	local pmLuaEditor = LuaEditor.getPopupMenu().Items
+
+	this.addMenuItem( pmLuaEditor, '-' )
+	-- ? ADD MENU BROWSE THIS MEMORY REGION LUA EDITOR
+	this.addMenuItem( pmLuaEditor, 'Browse this memory region', 'miBrowseMemory', function( sender )
+		if LuaEditor.SelText ~= '' then
+			local Address = getAddressSafe( LuaEditor.SelText )
+			if Address ~= nil then
+				local MemoryView = getMemoryViewForm()
+				MemoryView.HexadecimalView.TopAddress = Address
+				MemoryView.HexadecimalView.SelectionStart = Address
+				MemoryView.HexadecimalView.SelectionStop = Address
+				MemoryView.bringToFront()
+			end
+		end
+	end )
+	-- ? ADD MENU DISASSEMBLE THIS MEMORY REGION LUA EDITOR
+	this.addMenuItem( pmLuaEditor, 'Disassemble this memory region', 'miDisassembleMemory', function( sender )
+		if LuaEditor.SelText ~= '' then
+			local Address = getAddressSafe( LuaEditor.SelText )
+			if Address ~= nil then
+				local MemoryView = getMemoryViewForm()
+				MemoryView.DisassemblerView.TopAddress = Address
+				MemoryView.DisassemblerView.SelectionStart = Address
+				MemoryView.DisassemblerView.SelectionStop = Address
+				MemoryView.bringToFront()
+			end
+		end
+	end )
+
+	local old_OnContextPopup = LuaEditor.OnContextPopup
+	LuaEditor.OnContextPopup = function( sender )
+		local state = false
+		if sender.SelText ~= '' then
+			state = getAddressSafe( sender.SelText ) ~= nil and true or false
+		end
+		local pmLuaEditor = sender.getPopupMenu().Items
+		pmLuaEditor.miBrowseMemory.Visible = state
+		pmLuaEditor.miDisassembleMemory.Visible = state
+		if old_OnContextPopup then
+			old_OnContextPopup()
+		end
+	end
+end
+
 -- ! ####################################
 -- ? ADD ENHANCEMENT TO LUA ENGINE EDITOR
 -- ! ####################################
@@ -928,6 +978,9 @@ this.LuaEngine_Enhancement = function()
 
 	-- ? ADD EXTRA OPTIONS
 	this.EditorOptions( mnLuaScript )
+
+	-- ? ADD MEMORY POPUP MENU
+	this.MemoryPopup( mnLuaScript )
 
 	-- ? MAKE VIEW MENU VISIBLE IN NEW LUA ENGINE
 	LuaEngine.miView.Visible = true
@@ -1034,6 +1087,8 @@ this.AutoInject_Enhancement = function()
 	-- ? ADD EXTRA OPTIONS
 	this.EditorOptions( mnAssemblescreen )
 
+	-- ? ADD MEMORY POPUP MENU
+	this.MemoryPopup( mnAssemblescreen )
 end
 
 -- ! ###############################################
