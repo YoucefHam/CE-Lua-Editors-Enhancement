@@ -588,16 +588,33 @@ this.AutoBackup = {
 		OnExecute = this.getSettings( this.Features.AutoBackup.Name .. 'OnExecute' ),
 		Time = this.getSettings( this.Features.AutoBackup.Name .. 'Time' ) == true and this.setSettings( this.Features.AutoBackup.Name .. 'Time', 0 ) or this.getSettings( this.Features.AutoBackup.Name .. 'Time' ),
 		TimeU = this.getSettings( this.Features.AutoBackup.Name .. 'TimeU' ) == true and this.setSettings( this.Features.AutoBackup.Name .. 'TimeU', 1 ) or this.getSettings( this.Features.AutoBackup.Name .. 'TimeU' ),
+		OnTime = this.setSettings( this.Features.AutoBackup.Name .. 'OnTime', this.getSettings( this.Features.AutoBackup.Name .. 'Time' ) ~= '0' and true or false ),
 		Directory = this.getSettings( this.Features.AutoBackup.Name .. 'Directory' ) == true and this.setSettings( this.Features.AutoBackup.Name .. 'Directory', os.getenv( 'temp' ) ) or this.getSettings( this.Features.AutoBackup.Name .. 'Directory' )
 	},
 	Backup = function( LuaEditor, type )
 		if this.getSettings( this.Features.AutoBackup.Name ) and this.getSettings( this.Features.AutoBackup.Name .. type ) then
-			if (LuaEditor.Lines.getText()):gsub( '\n', '' ):gsub( '\r', '' ):gsub( '\t', '' ):gsub( '%s*', '' ) ~= '' then
-				LuaEditor.Lines.saveToFile( this.getSettings( this.Features.AutoBackup.Name .. 'Directory' ) .. '\\' .. LuaEditor.Parent.Owner.Caption:gsub( '*', '' ):gsub( ':', '' ):gsub( '?', '' ):gsub( '/', '' ):gsub( '\\', '' ):gsub( '|', '' ):gsub( '"', '' ):gsub( '<', '' ):gsub( '>', '' ) .. '-' .. stringToMD5String( LuaEditor.Lines.getText() ) .. '.txt' )
+			if not fileExists( this.getSettings( this.Features.AutoBackup.Name .. 'Directory' ) .. '\\' .. LuaEditor.Parent.Owner.Caption:gsub( '*', '' ):gsub( ':', '' ):gsub( '?', '' ):gsub( '/', '' ):gsub( '\\', '' ):gsub( '|', '' ):gsub( '"', '' ):gsub( '<', '' ):gsub( '>', '' ) .. '-' .. stringToMD5String( LuaEditor.Lines.getText() ) .. '.txt' ) then
+				if (LuaEditor.Lines.getText()):gsub( '\n', '' ):gsub( '\r', '' ):gsub( '\t', '' ):gsub( '%s*', '' ) ~= '' then
+					LuaEditor.Lines.saveToFile( this.getSettings( this.Features.AutoBackup.Name .. 'Directory' ) .. '\\' .. LuaEditor.Parent.Owner.Caption:gsub( '*', '' ):gsub( ':', '' ):gsub( '?', '' ):gsub( '/', '' ):gsub( '\\', '' ):gsub( '|', '' ):gsub( '"', '' ):gsub( '<', '' ):gsub( '>', '' ) .. '-' .. stringToMD5String( LuaEditor.Lines.getText() ) .. '.txt' )
+				end
 			end
 		end
-	end
+	end,
+	BackupTimer = createTimer( nil, false )
 }
+this.AutoBackup.BackupTimer.OnTimer = function()
+	local Editor = nil
+	if not (getForm( 0 ).Name:match( 'frmLuaEngine' ) == nil) then
+		Editor = getForm( 0 ).ComponentByName['mScript']
+	elseif not (getForm( 0 ).Name:match( 'frmAutoInject' ) == nil) then
+		Editor = getForm( 0 ).ComponentByName['Assemblescreen']
+	end
+	if Editor and Editor.focused() then
+		this.AutoBackup.Backup( Editor, 'OnTime' )
+	end
+end
+this.AutoBackup.BackupTimer.Enabled = this.getSettings( this.Features.AutoBackup.Name .. 'OnTime' )
+this.AutoBackup.BackupTimer.Interval = tonumber( this.getSettings( this.Features.AutoBackup.Name .. 'Time' ) ) * tonumber( this.getSettings( this.Features.AutoBackup.Name .. 'TimeU' ) ) * 1000
 
 -- ! #######################
 -- ? CREATE ENHANCEMENT MENU
@@ -622,9 +639,9 @@ this.CreateMenu = function( LuaEditor )
 	this.addMenuItem( miSelectionMode, 'NORMAL        (Ctrl+Shift+N)', 'miSelectionModeNormal', function( sender )
 		local Editor = nil
 		if not (getForm( 0 ).Name:match( 'frmLuaEngine' ) == nil) then
-			Editor = LuaEditor.ComponentByName['mScript']
+			Editor = getForm( 0 ).ComponentByName['mScript']
 		elseif not (getForm( 0 ).Name:match( 'frmAutoInject' ) == nil) then
-			Editor = LuaEditor.ComponentByName['Assemblescreen']
+			Editor = getForm( 0 ).ComponentByName['Assemblescreen']
 		end
 		if Editor and Editor.focused() then
 			createThread( this.SelectionMode( VK_N ) )
@@ -633,9 +650,9 @@ this.CreateMenu = function( LuaEditor )
 	this.addMenuItem( miSelectionMode, 'COLUMN       (Ctrl+Shift+N)', 'miSelectionModeColumn', function( sender )
 		local Editor = nil
 		if not (getForm( 0 ).Name:match( 'frmLuaEngine' ) == nil) then
-			Editor = LuaEditor.ComponentByName['mScript']
+			Editor = getForm( 0 ).ComponentByName['mScript']
 		elseif not (getForm( 0 ).Name:match( 'frmAutoInject' ) == nil) then
-			Editor = LuaEditor.ComponentByName['Assemblescreen']
+			Editor = getForm( 0 ).ComponentByName['Assemblescreen']
 		end
 		if Editor and Editor.focused() then
 			createThread( this.SelectionMode( VK_C ) )
@@ -644,9 +661,9 @@ this.CreateMenu = function( LuaEditor )
 	this.addMenuItem( miSelectionMode, 'LINE               (Ctrl+Shift+N)', 'miSelectionModeLine', function( sender )
 		local Editor = nil
 		if not (getForm( 0 ).Name:match( 'frmLuaEngine' ) == nil) then
-			Editor = LuaEditor.ComponentByName['mScript']
+			Editor = getForm( 0 ).ComponentByName['mScript']
 		elseif not (getForm( 0 ).Name:match( 'frmAutoInject' ) == nil) then
-			Editor = LuaEditor.ComponentByName['Assemblescreen']
+			Editor = getForm( 0 ).ComponentByName['Assemblescreen']
 		end
 		if Editor and Editor.focused() then
 			createThread( this.SelectionMode( VK_L ) )
@@ -705,7 +722,7 @@ this.CreateMenu = function( LuaEditor )
 	local _Feature = this.Features.AutoBackup
 	local miAutoBackup = this.addMenuItem( miEnhancement, _Feature.Title, 'miEnhance_' .. _Feature.Name, function( sender )
 		if not this.getSettings( this.Features.AutoBackup.Name .. 'FormOpen' ) then
-			frm = load( this.AutoBackup.form )()
+			local frm = load( this.AutoBackup.form )()
 			this.setSettings( this.Features.AutoBackup.Name .. 'FormOpen', true )
 
 			-- ! FORM ON CLOSE
@@ -735,15 +752,15 @@ this.CreateMenu = function( LuaEditor )
 				frm.cbAutoBackup.Checked = this.setSettings( this.Features.AutoBackup.Name, sender.Checked )
 			end
 
-			-- ! Save on Open CHECK BOX
+			-- ! SAVE ON OPEN CHECK BOX
 			frm.gbTime.cbSaveOnOpen.OnChange = function( sender )
 				this.setSettings( this.Features.AutoBackup.Name .. 'OnOpen', sender.Checked )
 			end
-			-- ! Save on Close CHECK BOX
+			-- ! SAVE ON CLOSE CHECK BOX
 			frm.gbTime.cbSaveOnClose.OnChange = function( sender )
 				this.setSettings( this.Features.AutoBackup.Name .. 'OnClose', sender.Checked )
 			end
-			-- ! Save on Execute CHECK BOX
+			-- ! SAVE ON EXECUTE CHECK BOX
 			frm.gbTime.cbSaveOnExecute.OnChange = function( sender )
 				this.setSettings( this.Features.AutoBackup.Name .. 'OnExecute', sender.Checked )
 			end
@@ -755,12 +772,15 @@ this.CreateMenu = function( LuaEditor )
 				else
 					this.setSettings( this.Features.AutoBackup.Name .. 'TimeU', 60 )
 				end
+				this.AutoBackup.BackupTimer.Interval = tonumber( this.getSettings( this.Features.AutoBackup.Name .. 'Time' ) ) * tonumber( this.getSettings( this.Features.AutoBackup.Name .. 'TimeU' ) ) * 1000
 			end
 
 			-- ! TIME BAR
 			frm.gbTime.gbTiming.cTimeBar.OnChange = function( sender )
 				frm.gbTime.gbTiming.eTime.Text = frm.gbTime.gbTiming.cTimeBar.Position > 0 and frm.gbTime.gbTiming.cTimeBar.Position or 'NA'
 				this.setSettings( this.Features.AutoBackup.Name .. 'Time', frm.gbTime.gbTiming.cTimeBar.Position )
+				this.AutoBackup.BackupTimer.Enabled = this.setSettings( this.Features.AutoBackup.Name .. 'OnTime', this.getSettings( this.Features.AutoBackup.Name .. 'Time' ) ~= '0' and true or false )
+				this.AutoBackup.BackupTimer.Interval = tonumber( this.getSettings( this.Features.AutoBackup.Name .. 'Time' ) ) * tonumber( this.getSettings( this.Features.AutoBackup.Name .. 'TimeU' ) ) * 1000
 			end
 
 			-- ! TIME BOX
@@ -777,6 +797,7 @@ this.CreateMenu = function( LuaEditor )
 					end
 				end
 			end
+
 			frm.cbAutoBackup.Checked = this.getSettings( this.Features.AutoBackup.Name )
 			frm.gbTime.gbTiming.rbSec.State = this.getSettings( this.Features.AutoBackup.Name .. 'TimeU' ) == '1' and 1 or 0
 			frm.gbTime.gbTiming.rbMin.State = this.getSettings( this.Features.AutoBackup.Name .. 'TimeU' ) == '60' and 1 or 0
