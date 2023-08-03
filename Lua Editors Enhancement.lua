@@ -1,4 +1,4 @@
---[====[ return
+--[====[
 	Author:  YoucefHam
 	Email:   youcefham20@gmail.com
 	Discord: YoucefHam
@@ -7,13 +7,16 @@
 	Lua Editors Enhancement:
 
 	- Add Lua Engine Button to CE Main Form with shortcut CTRL+L
+	- Add CheckBox to lua engine, to clear output befor execute.(on top of Execute Button)
+	- Add clear popup item to lua engine, to clear output befor execute.
 	- inside "Lua Engine" and "Lua Editor" and "AutoAssemble Editor"
 		Ctrl + Mouse Wheel : Zoom Font Size and save it to restore later.
 		Auto close brackets with selected code "" '' () [] {}. see "AutoClose.List"
 		Ctrl+Q to comment (selected) code in lua (block) --[=[Code]=].
 		Ctrl+Shift+Q to uncomment (selected) code in lua (block).
 		Make indents use TABs only. (Space at the start of the line)
-		Keep spaces at end of the lines
+		Keep spaces at end of the lines.
+		Backup script On Open or Close or Execute, or on Timer
 		Selection mode: (some of them works without this Extension)
 			* Hold ALT and Select : Select text in column mode.
 			* Hold CTRL + SHIFT + Click : type in multiple places.
@@ -96,6 +99,12 @@ this.Features = {
 		Name = 'KeepSpace',
 		Enabled = true,
 		Title = '&Keep Spaces at EOL'
+	},
+	-- ? AUTO BACKUP OPENED SCRIPT
+	AutoBackup = {
+		Name = 'AutoBackup',
+		Enabled = true,
+		Title = '&Auto Backup'
 	}
 }
 
@@ -106,18 +115,36 @@ this.Settings = getSettings( ExtensionName )
 
 -- ! SAVE ENHANCEMENT SETTINGS
 this.setSettings = function( Name, value )
-	this.Settings.Value[Name] = tostring( (value == true) and true or false )
+	if value == true then
+		this.Settings.Value[Name] = tostring( true )
+	elseif value == false then
+		this.Settings.Value[Name] = tostring( false )
+	elseif value ~= '' and value ~= nil then
+		this.Settings.Value[Name] = tostring( value )
+	end
+	return value
 end
 
 -- ! GET SAVED ENHANCEMENT SETTINGS
 this.getSettings = function( Name )
-	return this.Settings.Value[Name]:match( '(false)' ) == nil and (this.Settings.Value[Name]:match( '(true)' ) == nil and this.setSettings( Name, true ) or true) or false
+	if this.Settings.Value[Name]:match( '(false)' ) ~= nil then
+		return false
+	elseif this.Settings.Value[Name]:match( '(true)' ) ~= nil then
+		return true
+	elseif this.Settings.Value[Name] ~= '' then
+		return this.Settings.Value[Name]
+	else
+		return this.setSettings( Name, true )
+	end
 end
 
 -- ! PREP SETTINGS FOR FIRST TIME RUN
 this.setSettings( this.Features.AddLuaEngineButton.Name, this.Features.AddLuaEngineButton.Enabled )
 for _Feature, _ in pairs( this.Features ) do
 	if this.Features[_Feature].Enabled == true then
+		if this.getSettings( this.Features[_Feature].Name ) == '' then
+			this.setSettings( this.Features[_Feature].Name, true )
+		end
 		this.Features[_Feature].Enabled = this.getSettings( this.Features[_Feature].Name )
 	elseif this.Features[_Feature].Enabled == false then
 		this.setSettings( this.Features[_Feature].Name, false )
@@ -167,8 +194,12 @@ end
 -- ! CONSTRUCT PICTURES
 this.Pictures = {
 	data = {
+		-- ! PICTURE FOR ENABLED
 		ON = '42 4D F6 00 00 00 00 00 00 00 76 00 00 00 28 00 00 00 10 00 00 00 10 00 00 00 01 00 04 00 00 00 00 00 80 00 00 00 C3 0E 00 00 C3 0E 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 80 00 00 80 00 00 00 80 80 00 80 00 00 00 80 00 80 00 80 80 00 00 80 80 80 00 C0 C0 C0 00 00 00 FF 00 00 FF 00 00 00 FF FF 00 FF 00 00 00 FF 00 FF 00 FF FF 00 00 FF FF FF 00 FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF 87 77 77 77 77 78 FF FF 70 00 00 00 00 07 FF FF 70 00 0A 00 00 07 FF FF 70 0F AA AF F0 07 FF FF 70 0A AA A7 F0 07 FF FF 70 AA AA AA 80 07 FF FF 7A AA 7F AA A0 07 FF FF 70 A8 FF FA AA 07 FF FF 70 0F FF F8 AA A7 FF FF 70 00 00 00 AA AA FF FF 70 00 00 00 0A AA 7F FF 87 77 77 77 77 AA A8 FF FF FF FF FF FF FA AA FF FF FF FF FF FF F8 7F',
-		OFF = '42 4D F6 00 00 00 00 00 00 00 76 00 00 00 28 00 00 00 10 00 00 00 10 00 00 00 01 00 04 00 00 00 00 00 80 00 00 00 C3 0E 00 00 C3 0E 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 80 00 00 80 00 00 00 80 80 00 80 00 00 00 80 00 80 00 80 80 00 00 80 80 80 00 C0 C0 C0 00 00 00 FF 00 00 FF 00 00 00 FF FF 00 FF 00 00 00 FF 00 FF 00 FF FF 00 00 FF FF FF 00 FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF 87 77 77 77 77 78 FF FF 70 00 00 00 00 07 FF FF 70 00 00 00 00 07 FF FF 70 0F FF FF F0 07 FF FF 70 0F FF FF F0 07 FF FF 70 0F FF FF F0 07 FF FF 70 0F FF FF F0 07 FF FF 70 0F FF FF F0 07 FF FF 70 0F FF FF F0 07 FF FF 70 00 00 00 00 07 FF FF 70 00 00 00 00 07 FF FF 87 77 77 77 77 78 FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF'
+		-- ! PICTURE FOR DISABLED
+		OFF = '42 4D F6 00 00 00 00 00 00 00 76 00 00 00 28 00 00 00 10 00 00 00 10 00 00 00 01 00 04 00 00 00 00 00 80 00 00 00 C3 0E 00 00 C3 0E 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 80 00 00 80 00 00 00 80 80 00 80 00 00 00 80 00 80 00 80 80 00 00 80 80 80 00 C0 C0 C0 00 00 00 FF 00 00 FF 00 00 00 FF FF 00 FF 00 00 00 FF 00 FF 00 FF FF 00 00 FF FF FF 00 FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF 87 77 77 77 77 78 FF FF 70 00 00 00 00 07 FF FF 70 00 00 00 00 07 FF FF 70 0F FF FF F0 07 FF FF 70 0F FF FF F0 07 FF FF 70 0F FF FF F0 07 FF FF 70 0F FF FF F0 07 FF FF 70 0F FF FF F0 07 FF FF 70 0F FF FF F0 07 FF FF 70 00 00 00 00 07 FF FF 70 00 00 00 00 07 FF FF 87 77 77 77 77 78 FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF',
+		-- ! PICTURE FOR SETTINGS
+		SETTING = '42 4D 36 03 00 00 00 00 00 00 36 00 00 00 28 00 00 00 10 00 00 00 10 00 00 00 01 00 18 00 00 00 00 00 00 03 00 00 9C 10 00 00 9C 10 00 00 00 00 00 00 00 00 00 00 FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF F4 CA AF DF B1 92 FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FC FC FC 8F 8F 8F FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FE E4 D5 E8 76 2B D9 52 00 B8 69 35 FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF BC BC BC 61 61 61 9B 9B 9B FF FF FF FF FF FF FF FF FF FF FF FF F7 D2 B8 FB A6 6E EC 8A 4A DD 5A 01 B7 68 32 FF FF FF FF FF FF FF FF FF DC DC DC 97 97 97 C8 C8 C8 FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF E8 9A 66 FC AC 76 EC 8A 4A DD 5A 01 B7 69 34 FF FF FF D0 D1 D1 B2 B2 B2 EB EB EB FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF E9 9A 66 FC AC 76 EC 8A 4A DE 5B 02 AF 62 2D B8 C7 D1 E1 E1 E1 FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF E9 9A 66 FE AD 78 EC 8A 4A DF 5B 03 B6 68 34 FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF DA 8C 58 FF AF 79 EC 8A 4A E4 5C 00 BF 6A 32 C6 CD D2 BC BC BC FE FE FE FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF 93 93 CB 83 83 C5 C2 D1 CC E2 94 60 FF AF 76 B5 6F 3F 86 8E 93 CA CA CB CA CA CA 7C 7C 7C C2 C2 C2 FF FF FF FF FF FF FF FF FF FF FF FF 41 41 A0 00 00 91 00 00 BB 9E 9E E6 FF FF FF EC 9E 69 84 8E 94 FF FF FF FE FF FF F9 F9 F9 FB FB FB 83 83 83 EF EF EF FF FF FF FF FF FF 43 43 A1 00 00 96 00 00 C0 0D 0D E2 DC DC FF FF FF FF C2 C9 CE CA C9 CA FF FF FF FC FC FC 99 99 99 75 75 75 D4 D4 D4 A9 A9 A9 FF FF FF 41 41 A0 00 00 96 00 00 C0 11 11 E2 BB BB FF FF FF FF FF FF FF BC BC BC CA CA CA F8 F8 F8 99 99 99 EA EA EA FF FF FF 56 56 56 ED ED ED 9C 9C CE 00 00 92 00 00 C0 11 11 E2 BB BB FF FF FF FF FF FF FF FF FF FF FD FD FD 7C 7C 7C FB FB FB 76 76 76 FF FF FF FF FF FF FF FF FF FF FF FF A5 A5 DE 00 00 B7 0D 0D E2 BB BB FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF C1 C1 C1 84 84 84 D5 D5 D5 56 56 56 FF FF FF FF FF FF FF FF FF FF FF FF AD AD F4 DC DC FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF EA EA EA 9E 9E 9E E9 E9 E9 FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF'
 	},
 	Create = function( picture_data )
 		local _stream = createStringStream()
@@ -183,10 +214,9 @@ this.Pictures = {
 		return _bmp
 	end
 }
--- ! PICTURE FOR ENABLED FEATURE
-this.Pictures.ON = this.Pictures.Create( this.Pictures.data.ON )
--- ! PICTURE FOR DISABLED FEATURE
-this.Pictures.OFF = this.Pictures.Create( this.Pictures.data.OFF )
+for _Pic, _Data in pairs( this.Pictures.data ) do
+	this.Pictures[_Pic] = this.Pictures.Create( _Data )
+end
 
 -- ! ###########################################################
 -- ? ADD "AUTO CLOSE BRACKETS" AND "COMMENT / UNCOMMENT" TO EDITOR
@@ -520,6 +550,55 @@ this.SelectionMode = function( SelectionMode )
 	keyUp( VK_CONTROL )
 end
 
+-- ! ##################
+-- ? AUTO BACKUP SCRIPT
+-- ! ##################
+this.AutoBackup = {
+	form = [[local a=createForm(getForm(0))a.Name='AutoBackupForm'a.Caption='Script Auto Backup Settings:'a.AutoSize=true;a.Constraints.MinWidth=675;
+	a.Constraints.MinHeight=280;a.Width=675;a.BorderStyle=bsSizeable;a.BorderIcons='[biSystemMenu]'a.FormStyle='fsSystemStayOnTop'a.ShowInTaskBar='stAlways'
+	a.Position='poDesktopCenter'a.Scaled=false;a.DoNotSaveInTable=true;a.UseDockManager=false;a.HorzScrollBar.Visible=false;a.VertScrollBar.Visible=false;
+	local b=createGroupBox(a)b.Caption='Auto backup directory :'b.Name='gbDir'b.Align=alTop;b.AutoSize=true;b.BorderSpacing.Around=10;local c=createEdit(b)
+	c.Name='eDir'c.Text=''c.AutoSize=false;c.Align=alClient;c.BorderSpacing.Around=5;c.Constraints.MinHeight=30;c.Constraints.MaxHeight=30;local d=createButton(b)
+	d.Name='bBrows'd.Caption='BROWS'd.AutoSize=false;d.Align=alRight;d.BorderSpacing.Around=5;d.Constraints.MinHeight=30;d.Constraints.MaxHeight=30;
+	d.Constraints.MaxWidth=120;d.Constraints.MinWidth=120;local e=createSelectDirectoryDialog(a)e.Name='cSelectDir'
+	e.Options='[ofHideReadOnly,ofPathMustExist,ofEnableSizing,ofDontAddToRecent,ofViewDetail]'local f=createGroupBox(a)f.Caption='Time & conditions :'f.Name='gbTime'
+	f.AutoSize=true;f.Align=alTop;f.Top=b.Top+b.Height;f.BorderSpacing.Around=10;local g=createCheckBox(f)g.Caption='Backup On Open'g.Name='cbSaveOnOpen'g.AutoSize=true;
+	g.BorderSpacing.Around=10;g.Constraints.MaxHeight=25;g.AnchorSideTop.Control=f;g.AnchorSideLeft.Control=f;local h=createCheckBox(f)h.Caption='Backup On Close'
+	h.Name='cbSaveOnClose'h.AutoSize=true;h.BorderSpacing.Around=10;h.Constraints.MaxHeight=25;h.AnchorSideTop.Control=g;h.AnchorSideTop.Side=asrBottom;
+	h.AnchorSideLeft.Control=f;local i=createCheckBox(f)i.Caption='Backup Befor Execute'i.Name='cbSaveOnExecute'i.AutoSize=true;i.BorderSpacing.Around=10;
+	i.Constraints.MaxHeight=25;i.AnchorSideTop.Control=h;i.AnchorSideTop.Side=asrBottom;i.AnchorSideLeft.Control=f;local j=createGroupBox(f)j.Name='gbTiming'
+	j.Caption='Backup Script every :'j.AutoSize=true;j.Align=alRight;j.Top=g.Top;j.BorderSpacing.Around=5;j.BorderSpacing.Top=-10;j.Anchors='[akLeft]'
+	j.AnchorSideLeft.Control=i;j.AnchorSideLeft.Side=asrRight;local k=createEdit(j)k.Name='eTime'k.Text=20;k.Alignment='taCenter'k.AutoSize=false;k.BorderSpacing.Around=10;
+	k.Constraints.MinHeight=30;k.Constraints.MaxHeight=30;k.Constraints.MaxWidth=100;k.Constraints.MinWidth=100;k.NumbersOnly=true;k.MaxLength=2;k.Anchors='[akTop,akLeft]'
+	k.AnchorSideTop.Control=j;k.AnchorSideTop.Side=asrCenter;k.AnchorSideLeft.Control=j;k.AnchorSideLeft.Side=asrLeft;local l=createComponentClass('TRadioButton',j)
+	l.Parent=j;l.Caption='Min'l.Name='rbMin'l.AutoSize=false;l.Constraints.MaxWidth=60;l.Constraints.MinWidth=60;l.Constraints.MaxHeight=25;l.BorderSpacing.Around=10;
+	l.Anchors='[akTop,akRight]'l.AnchorSideTop.Control=j;l.AnchorSideTop.Side=asrCenter;l.AnchorSideRight.Control=j;l.AnchorSideRight.Side=asrRight;local m=createComponentClass('TRadioButton',j)
+	m.Parent=j;m.Caption='Sec'm.Name='rbSec'm.AutoSize=false;m.Constraints.MaxWidth=60;m.Constraints.MinWidth=60;m.Constraints.MaxHeight=25;m.BorderSpacing.Around=10;m.Checked=true;
+	m.Anchors='[akTop,akRight]'m.AnchorSideTop.Control=j;m.AnchorSideTop.Side=asrCenter;m.AnchorSideRight.Control=l;m.AnchorSideRight.Side=asrLeft;local n=createTrackBar(j)
+	n.BorderSpacing.Around=10;n.Name='cTimeBar'n.Min=0;n.Max=60;n.Position=k.Text;n.Anchors='[akTop,akRight,akLeft]'n.AnchorSideTop.Control=j;n.AnchorSideTop.Side=asrCenter;
+	n.AnchorSideLeft.Control=k;n.AnchorSideLeft.Side=asrRight;n.AnchorSideRight.Control=m;n.AnchorSideRight.Side=asrLeft;local o=createCheckBox(a)o.Caption='Enabled / Disable Auto Backup'
+	o.Name='cbAutoBackup'o.Checked=true;o.Align=alLeft;o.BorderSpacing.Around=10;o.Constraints.MaxHeight=25;local p=createButton(a)p.Caption='Close'p.Name='bClose'p.Align=alRight;
+	p.BorderSpacing.Around=10;p.Constraints.MaxHeight=30;p.Constraints.MinWidth=150;p.Constraints.MaxWidth=150;local q=createButton(a)q.Caption='Open Backup Directory'q.Name='bOpenDir'
+	q.Align=alRight;q.BorderSpacing.Around=10;q.Constraints.MinWidth=200;q.Constraints.MaxHeight=30;q.Anchors='[akTop,akRight,akLeft]'q.AnchorSideLeft.Control=o;q.AnchorSideLeft.Side=asrRight;
+	a.Constraints.MaxHeight=a.Height;a.Constraints.MinHeight=a.Height;return a]],
+	FormOpen = this.setSettings( this.Features.AutoBackup.Name .. 'FormOpen', false ),
+	Save = {
+		OnOpen = this.getSettings( this.Features.AutoBackup.Name .. 'OnOpen' ),
+		OnClose = this.getSettings( this.Features.AutoBackup.Name .. 'OnClose' ),
+		OnExecute = this.getSettings( this.Features.AutoBackup.Name .. 'OnExecute' ),
+		Time = this.getSettings( this.Features.AutoBackup.Name .. 'Time' ) == true and this.setSettings( this.Features.AutoBackup.Name .. 'Time', 0 ) or this.getSettings( this.Features.AutoBackup.Name .. 'Time' ),
+		TimeU = this.getSettings( this.Features.AutoBackup.Name .. 'TimeU' ) == true and this.setSettings( this.Features.AutoBackup.Name .. 'TimeU', 1 ) or this.getSettings( this.Features.AutoBackup.Name .. 'TimeU' ),
+		Directory = this.getSettings( this.Features.AutoBackup.Name .. 'Directory' ) == true and this.setSettings( this.Features.AutoBackup.Name .. 'Directory', os.getenv( 'temp' ) ) or this.getSettings( this.Features.AutoBackup.Name .. 'Directory' )
+	},
+	Backup = function( LuaEditor, type )
+		if this.getSettings( this.Features.AutoBackup.Name ) and this.getSettings( this.Features.AutoBackup.Name .. type ) then
+			if (LuaEditor.Lines.getText()):gsub( '\n', '' ):gsub( '\r', '' ):gsub( '\t', '' ):gsub( '%s*', '' ) ~= '' then
+				LuaEditor.Lines.saveToFile( this.getSettings( this.Features.AutoBackup.Name .. 'Directory' ) .. '\\' .. LuaEditor.Parent.Owner.Caption:gsub( '*', '' ):gsub( ':', '' ):gsub( '?', '' ):gsub( '/', '' ):gsub( '\\', '' ):gsub( '|', '' ):gsub( '"', '' ):gsub( '<', '' ):gsub( '>', '' ) .. '-' .. stringToMD5String( LuaEditor.Lines.getText() ) .. '.txt' )
+			end
+		end
+	end
+}
+
 -- ! #######################
 -- ? CREATE ENHANCEMENT MENU
 -- ! #######################
@@ -532,7 +611,7 @@ this.CreateMenu = function( LuaEditor )
 	end
 
 	local miEnhancement = this.addMenuItem( LuaEditor.Menu.Items, '&Enhancement', 'miEnhancement', function( sender )
-		for item = 0, sender.Count do
+		for item = 0, sender.Count - 1 do
 			if sender.Item[item].name:match( 'miEnhancement' ) then
 				sender.Item[item].Bitmap = this.getSettings( sender.Item[item].name:match( 'miEnhancement(.+)$' ) ) and this.Pictures.ON or this.Pictures.OFF
 			end
@@ -623,6 +702,95 @@ this.CreateMenu = function( LuaEditor )
 	end )
 	this.addMenuItem( miEnhancement, '-' )
 
+	local _Feature = this.Features.AutoBackup
+	local miAutoBackup = this.addMenuItem( miEnhancement, _Feature.Title, 'miEnhance_' .. _Feature.Name, function( sender )
+		if not this.getSettings( this.Features.AutoBackup.Name .. 'FormOpen' ) then
+			frm = load( this.AutoBackup.form )()
+			this.setSettings( this.Features.AutoBackup.Name .. 'FormOpen', true )
+
+			-- ! FORM ON CLOSE
+			frm.OnClose = function( sender )
+				this.setSettings( this.Features.AutoBackup.Name .. 'FormOpen', false )
+				return caFree
+			end
+			frm.bClose.OnClick = frm.Close
+
+			-- ! BROWS BUTTON
+			frm.gbDir.bBrows.OnClick = function( sender )
+				if frm.cSelectDir.execute() then
+					frm.gbDir.eDir.Text = frm.cSelectDir.FileName
+					frm.gbDir.eDir.Text = this.setSettings( this.Features.AutoBackup.Name .. 'Directory', frm.cSelectDir.FileName )
+				end
+			end
+
+			-- ! OPEN SAVE DIRECTORY BUTTON
+			frm.bOpenDir.OnClick = function( sender )
+				shellExecute( frm.gbDir.eDir.Text )
+			end
+
+			-- ! AUTOBACKUP CHECK BOX
+			frm.cbAutoBackup.OnChange = function( sender )
+				frm.gbDir.Enabled = sender.Checked
+				frm.gbTime.Enabled = sender.Checked
+				frm.cbAutoBackup.Checked = this.setSettings( this.Features.AutoBackup.Name, sender.Checked )
+			end
+
+			-- ! Save on Open CHECK BOX
+			frm.gbTime.cbSaveOnOpen.OnChange = function( sender )
+				this.setSettings( this.Features.AutoBackup.Name .. 'OnOpen', sender.Checked )
+			end
+			-- ! Save on Close CHECK BOX
+			frm.gbTime.cbSaveOnClose.OnChange = function( sender )
+				this.setSettings( this.Features.AutoBackup.Name .. 'OnClose', sender.Checked )
+			end
+			-- ! Save on Execute CHECK BOX
+			frm.gbTime.cbSaveOnExecute.OnChange = function( sender )
+				this.setSettings( this.Features.AutoBackup.Name .. 'OnExecute', sender.Checked )
+			end
+
+			-- ! CHANGE TIME UNIT
+			frm.gbTime.gbTiming.rbSec.OnChange = function( sender )
+				if frm.gbTime.gbTiming.rbSec.State == 1 then
+					this.setSettings( this.Features.AutoBackup.Name .. 'TimeU', 1 )
+				else
+					this.setSettings( this.Features.AutoBackup.Name .. 'TimeU', 60 )
+				end
+			end
+
+			-- ! TIME BAR
+			frm.gbTime.gbTiming.cTimeBar.OnChange = function( sender )
+				frm.gbTime.gbTiming.eTime.Text = frm.gbTime.gbTiming.cTimeBar.Position > 0 and frm.gbTime.gbTiming.cTimeBar.Position or 'NA'
+				this.setSettings( this.Features.AutoBackup.Name .. 'Time', frm.gbTime.gbTiming.cTimeBar.Position )
+			end
+
+			-- ! TIME BOX
+			frm.gbTime.gbTiming.eTime.OnChange = function( sender )
+				if frm.gbTime.gbTiming.eTime.Text:match( '%d+' ) then
+					if tonumber( frm.gbTime.gbTiming.eTime.Text ) < 1 then
+						frm.gbTime.gbTiming.eTime.Text = 'NA'
+						frm.gbTime.gbTiming.cTimeBar.Position = 0
+					elseif tonumber( frm.gbTime.gbTiming.eTime.Text ) > 60 then
+						frm.gbTime.gbTiming.eTime.Text = 60
+						frm.gbTime.gbTiming.cTimeBar.Position = 60
+					else
+						frm.gbTime.gbTiming.cTimeBar.Position = frm.gbTime.gbTiming.eTime.Text
+					end
+				end
+			end
+			frm.cbAutoBackup.Checked = this.getSettings( this.Features.AutoBackup.Name )
+			frm.gbTime.gbTiming.rbSec.State = this.getSettings( this.Features.AutoBackup.Name .. 'TimeU' ) == '1' and 1 or 0
+			frm.gbTime.gbTiming.rbMin.State = this.getSettings( this.Features.AutoBackup.Name .. 'TimeU' ) == '60' and 1 or 0
+			frm.gbDir.eDir.Text = this.getSettings( this.Features.AutoBackup.Name .. 'Directory' )
+			frm.gbTime.gbTiming.cTimeBar.Position = this.getSettings( this.Features.AutoBackup.Name .. 'Time' )
+			frm.gbTime.cbSaveOnOpen.Checked = this.getSettings( this.Features.AutoBackup.Name .. 'OnOpen' )
+			frm.gbTime.cbSaveOnClose.Checked = this.getSettings( this.Features.AutoBackup.Name .. 'OnClose' )
+			frm.gbTime.cbSaveOnExecute.Checked = this.getSettings( this.Features.AutoBackup.Name .. 'OnExecute' )
+
+		end
+	end )
+	miAutoBackup.Bitmap = this.Pictures.SETTING
+	this.addMenuItem( miEnhancement, '-' )
+
 end
 
 -- ! ###############
@@ -669,7 +837,7 @@ this.LuaEngine_Enhancement = function()
 	local old_MenuItem11 = LuaEngine.ComponentByName['MenuItem11'].OnClick
 	LuaEngine.ComponentByName['MenuItem11'].OnClick = function( sender )
 		old_MenuItem11( sender )
-		this.runTimer( this.LuaEngine_Enhancement, 1500 )
+		this.runTimer( this.LuaEngine_Enhancement, 800 )
 	end
 
 	-- ? SET SAVED FONT SIZE WHEN LUA ENGINE SHOW
@@ -678,6 +846,44 @@ this.LuaEngine_Enhancement = function()
 		old_OnShow( sender )
 		this.Font.Load( mnLuaScript, CE_Settings )
 		this.Font.Load( mnLuaOutput, CE_Settings )
+		this.AutoBackup.Backup( mnLuaScript, 'OnOpen' )
+	end
+
+	-- ? BACKUP WHEN LUA ENGINE CLOSE
+	local old_OnClose = LuaEngine.OnClose
+	LuaEngine.OnClose = function( sender, option )
+		this.AutoBackup.Backup( mnLuaScript, 'OnClose' )
+		if old_OnClose then
+			return old_OnClose( sender )
+		else
+			return option
+		end
+	end
+
+	-- ! ADD CLEAR CHECK BOX TO CLEAR OUTPUT BEFOR EXECUTE
+	local clearCheckBox = createCheckBox( LuaEngine )
+	clearCheckBox.Caption = 'Clear'
+	clearCheckBox.Name = 'clearCheckBox'
+	clearCheckBox.Constraints.MaxHeight = 25
+	clearCheckBox.Parent = LuaEngine.btnExecute.Parent
+	clearCheckBox.Anchors = '[akTop,akLeft]'
+	clearCheckBox.AnchorSideTop.Control = LuaEngine.btnExecute.Parent
+	clearCheckBox.AnchorSideTop.Side = asrTop
+	clearCheckBox.AnchorSideLeft.Control = LuaEngine.btnExecute
+	clearCheckBox.AnchorSideLeft.Side = asrLeft
+	LuaEngine.AnchorSideTop.Control = clearCheckBox
+	LuaEngine.AnchorSideTop.Side = asrBottom
+
+	-- ? BACKUP WHEN LUA ENGINE EXECUTE SCRIPT
+	local old_btnExecute = LuaEngine.ComponentByName['btnExecute'].OnClick
+	LuaEngine.ComponentByName['btnExecute'].OnClick = function( sender )
+		this.AutoBackup.Backup( mnLuaScript, 'OnExecute' )
+		if clearCheckBox.Checked then
+			mnLuaOutput.Lines.setText( '' )
+		end
+		if old_btnExecute then
+			old_btnExecute( sender )
+		end
 	end
 
 	-- ? ADD "AUTO CLOSE BRACKETS" AND "COMMENT / UNCOMMENT"
@@ -756,8 +962,37 @@ this.AutoInject_Enhancement = function()
 	-- ? ADD ENHANCEMENT TO NEW SCRIPT
 	local old_miNewWindow = AutoInject.miNewWindow.OnClick
 	AutoInject.miNewWindow.OnClick = function( sender )
-		this.runTimer( this.AutoInject_Enhancement, 1500 )
+		this.runTimer( this.AutoInject_Enhancement, 800 )
 		return old_miNewWindow( sender )
+	end
+
+	-- ? SET SAVED FONT SIZE WHEN ASSEMBLER EDITOR SHOW
+	local old_OnShow = AutoInject.OnShow
+	AutoInject.OnShow = function( sender )
+		old_OnShow( sender )
+		this.Font.Load( mnAssemblescreen, CE_Settings )
+		this.AutoBackup.Backup( mnAssemblescreen, 'OnOpen' )
+	end
+	this.AutoBackup.Backup( mnAssemblescreen, 'OnOpen' )
+
+	-- ? BACKUP WHEN ASSEMBLER EDITOR CLOSE
+	local old_OnClose = AutoInject.OnClose
+	AutoInject.OnClose = function( sender, option )
+		this.AutoBackup.Backup( mnAssemblescreen, 'OnClose' )
+		if old_OnClose then
+			return old_OnClose( sender )
+		else
+			return option
+		end
+	end
+
+	-- ? BACKUP WHEN ASSEMBLER EDITOR EXECUTE SCRIPT
+	local old_btnExecute = AutoInject.ComponentByName['btnExecute'].OnClick
+	AutoInject.ComponentByName['btnExecute'].OnClick = function( sender )
+		this.AutoBackup.Backup( mnAssemblescreen, 'OnExecute' )
+		if old_btnExecute then
+			old_btnExecute( sender )
+		end
 	end
 
 	-- ? ADD "AUTO CLOSE BRACKETS" AND "COMMENT / UNCOMMENT"
@@ -799,14 +1034,14 @@ this.MemoryView_Enhancement = function()
 	local old_AutoInject1 = MemoryView.AutoInject1.OnClick
 	MemoryView.AutoInject1.OnClick = function( sender )
 		old_AutoInject1( sender )
-		this.runTimer( this.AutoInject_Enhancement, 1500 )
+		this.runTimer( this.AutoInject_Enhancement, 800 )
 	end
 
 	-- ? ADD AUTOINJECT ENHANCEMENT TO AUTO ASSEMBLE MENU IN NEW MEMORY VIEW
 	local Old_Newwindow1 = MemoryView.Newwindow1.OnClick
 	MemoryView.Newwindow1.OnClick = function( sender )
 		Old_Newwindow1( sender )
-		this.runTimer( this.MemoryView_Enhancement, 1500 )
+		this.runTimer( this.MemoryView_Enhancement, 800 )
 	end
 
 	-- ? CREATE ENHANCEMENT MENU HIDDEN JUST FOR CHECK
@@ -829,7 +1064,7 @@ this.MainForm_Enhancement = function()
 	local old_Changescript1 = MainForm.ComponentByName['Changescript1'].OnClick
 	MainForm.ComponentByName['Changescript1'].OnClick = function( sender )
 		if AddressList.SelectedRecord and AddressList.SelectedRecord.Type == vtAutoAssembler then
-			this.runTimer( this.AutoInject_Enhancement, 1500 )
+			this.runTimer( this.AutoInject_Enhancement, 800 )
 		end
 		if old_Changescript1 then
 			old_Changescript1( sender )
@@ -840,7 +1075,7 @@ this.MainForm_Enhancement = function()
 	local old_OnDblClick = AddressList.List.OnDblClick
 	AddressList.List.OnDblClick = function( sender )
 		if AddressList.SelectedRecord and AddressList.SelectedRecord.Type == vtAutoAssembler then
-			this.runTimer( this.AutoInject_Enhancement, 1500 )
+			this.runTimer( this.AutoInject_Enhancement, 800 )
 		end
 		if old_OnDblClick then
 			old_OnDblClick( sender )
@@ -851,7 +1086,7 @@ this.MainForm_Enhancement = function()
 	local old_OnKeyDown = AddressList.List.OnKeyDown
 	AddressList.List.OnKeyDown = function( sender, key )
 		if AddressList.SelectedRecord and AddressList.SelectedRecord.Type == vtAutoAssembler and key == VK_RETURN and not isKeyPressed( VK_CONTROL ) then
-			this.runTimer( this.AutoInject_Enhancement, 1500 )
+			this.runTimer( this.AutoInject_Enhancement, 800 )
 		end
 		if old_OnKeyDown then
 			old_OnKeyDown( sender, key )
@@ -906,9 +1141,9 @@ this.MainForm_Enhancement = function()
 
 end
 
--- ! #############################################
--- ? LOAD THE EXTENSION ONLY IF THE MAI IS VISIBLE
--- ! #############################################
+-- ! ###################################################
+-- ? LOAD THE EXTENSION ONLY IF THE MAIN FORM IS VISIBLE
+-- ! ###################################################
 local MainForm = MainForm or getMainForm()
 local s = os.clock()
 local TimeOut = false
