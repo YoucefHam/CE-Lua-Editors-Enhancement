@@ -7,29 +7,48 @@
 
 # Lua Editors Enhancement:
 
-	- Add Button "Lua Engine" To Ce Main Form.(Next to Memory View Button).
-	- Add Shortcut "Ctrl+L" to open Lua Engine from Ce Main Form.
-	- Add Checkbox "Clear" To Lua Engine, To Clear Output Before Execute.(On Top Of Execute Button)
-	- Add Popup Item "Clear Output" To Lua Engine, To Clear Output.
-	- Add Inside "Lua Engine" And "Lua Editor" And "Autoassemble Editor":
-		Use "Ctrl + Mouse Wheel" to Zoom Font Size And Save It To Restore Later.
-		Use "Auto Close Brackets" With Selected Code "str" 'txt' (code) [] {}. See "Autoclose.List"
-		Use "Ctrl + Q" To Comment Code In Line  --Code.
-		Use "Ctrl + W" To Comment Code In Block --[=[Code]=].
-		Use "Ctrl + Shift + Q" To Uncomment (Selected) Code In Line --Code.
-		Use "Ctrl + Shift + W" To Uncomment (Selected) Code In Block --[=[Code]=].
-		Use "Tab Only" For Indents. (Space At The Start Of The Line)
-		Use "Keep Spaces" To Stop Editor from removing spaces.
-		Add Popup Item "Browse This Memory Region" To Editor Popup. (for Selected Text)
-		Add Popup Item "Disassemble This Memory Region" To Editor Popup. (for Selected Text)
-		Use "Auto Backup Script" to save Editor code to file:
-			"OnOpen" : Save After Editor Opened.
-			"OnClose" : Save Before Editor Closed.
-			"OnExecute" : Save Before Editor Execute Code.
-			"OnTime" : Save opened Editors Code every x amount of time.
-		Add Menu Item "Selection Mode": (Some Of Them Works Without This Extension)
-			"Hold Alt + Select" : Select Text In Column Mode.
-			"Hold Ctrl + Shift + Click" : Type In Multiple Places.
-			"Ctrl + Shift + N" : Toggle Normal Selection Mode.
-			"Ctrl + Shift + C" : Toggle Column Selection Mode.
-			"Ctrl + Shift + L" : Toggle Line Selection Mode.
+	## Add button "LUA ENGINE" to ce main form.(next to memory view button).
+	## Add shortcut "CTRL+L" to open lua engine from ce main form.
+	## Add checkbox "CLEAR" to lua engine, to clear output before execute.(on top of execute button)
+	## Add popup item "CLEAR OUTPUT" to lua engine, to clear output.
+	## Add inside "LUA ENGINE" and "LUA EDITOR" and "AUTOASSEMBLE EDITOR":
+		Use "CTRL + MOUSE WHEEL" to zoom font size and save it to restore later.
+		Use "AUTO CLOSE BRACKETS" with selected code "str" 'txt' (code) [] {}. See "AutoClose.List"
+		Use "CTRL + Q" to comment code in line.  --code
+		Use "CTRL + W" to comment code in block. --[=[code]=]
+		Use "CTRL + SHIFT + Q" to uncomment (selected) code in line --code.
+		Use "CTRL + SHIFT + W" to uncomment (selected) code in block --[=[code]=].
+		Use "TAB ONLY IN INDENT" for tab only in indents. (space at the start of the line)
+		Use "KEEP SPACES AT EOL" to stop editor from removing spaces in the end of the line.
+		Add popup item "BROWSE THIS MEMORY REGION" to editor popup. (for selected text)
+		Add popup item "DISASSEMBLE THIS MEMORY REGION" to editor popup. (for selected text)
+		Add allow to drag and drop selected text.
+		### Use "AUTO BACKUP SCRIPT" to save editor code to file:
+			"OnOPEN" : backup after editor opened.
+			"OnCLOSE" : backup before editor closed.
+			"OnEXECUTE" : backup before editor execute code.
+			"OnTIME" : backup opened editors code every x amount of time.
+		### Add menu item "SELECTION MODE": (some of them works without this extension)
+			"HOLD ALT + SELECT" : select text in column mode.
+			"HOLD CTRL + SHIFT + CLICK" : type in multiple places.
+			"CTRL + SHIFT + N" : toggle normal selection mode.
+			"CTRL + SHIFT + C" : toggle column selection mode.
+			"CTRL + SHIFT + L" : toggle line selection mode.
+		### Add menu "EDIT":
+			Undo
+			Redo
+			Comments / Uncomments:
+				Comment in Line
+				Uncomment in Line
+				Comment in Block
+				Uncomment in Block
+			Convert To:
+				UPPER CASE
+				lower case
+				Proper Case
+				Sentence case
+				Hexadecimal > Decimal
+				Decimal > Hexadecimal
+				String > Bytes
+				Bytes > String
+				Aline String
